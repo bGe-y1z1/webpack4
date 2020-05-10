@@ -4,19 +4,13 @@ webpack4 的构建 demo
 
 安装 webpack webpack-cli
 
-yarn add webpack webpack-cli -D
-
-初始化项目目录
-
-src
+> yarn add webpack webpack-cli -D
 
 创建配置文件
 
-mkdir webpack.config.js
+> mkdir webpack.config.js
 
-配置
-
-1 配置入口和出口
+配置入口和出口
 
 ```js
 // webpack.config.js
@@ -28,7 +22,9 @@ const webpackConfig = {
   },
   output: {
     path: path.resolve(__dirname, './dist'),
-    filename: '[name].[hash:7].js',
+    filename: '[name].[hash:7].js', // 打包成7位的hash
+    publicPath: '', // 项目的跟目录可以配置cdn链接
+    chunkFilename: '[name].js', // 单独打包的文件 分包
   },
 };
 module.exports = webpackConfig;
@@ -43,11 +39,11 @@ module.exports = webpackConfig;
   },
 ```
 
-执行 yarn run dev
+执行
 
-警告 需要设置 mode 打包模式
+> yarn run dev
 
-配置
+控制台会有警告需要设置 mode 打包模式，添加 mode
 
 ```js
 // webpack.config.js
@@ -68,9 +64,10 @@ const webpackConfig = {
 module.exports = webpackConfig;
 ```
 
-编写入口问价和依赖
+配置入口问价和依赖
 安装 vue 和 vue-router
-创建 App.vue 和 router 文件
+
+> yarn add vue vue-router -D
 
 ```js
 import Vue from 'vue';
@@ -93,7 +90,7 @@ new Vue({
     alias: {
       '@': path.resolve(__dirname, '../src'),
     }, // 设置文件别名
-    modules: ['node_modules'], // 设置模块搜索的目录
+   // modules: [''], // 设置模块搜索的目录
   },
 ```
 
@@ -101,7 +98,7 @@ new Vue({
 
 解析 .vue 文件 需要安装 vue-loader vue-template-compiler
 
-yarn add vue-loader vue-template-compiler -D
+> yarn add vue-loader vue-template-compiler -D
 
 配置 module
 
@@ -131,6 +128,8 @@ const VueLoaderPlugin = require('vue-loader/lib/plugin');
 解析 stylus css 预处理器
 安装插件 stylus stylus-loader css-loader vue-style-loader
 
+> yarn add stylus stylus-loader css-loader vue-style-loader -D
+
 ```js
 module: {
     rules: [
@@ -153,7 +152,10 @@ module: {
 ```
 
 配置 html 主页面
+
 安装插件 html-webpack-plugin
+
+> yarn add html-webpack-plugin -D
 
 ```js
 const htmlWebpackPlugin = require('html-webpack-plugin');
@@ -169,6 +171,8 @@ plugins: [
 
 配置本地服务 webpack-dev-server
 安装 webpack-dev-server
+
+> yarn add webpack-dev-server -D
 
 ```js
 devServer: {
@@ -222,6 +226,8 @@ module.exports = require(`./build/webpack.config.${env}.js`);
 配置 js babel
 安装 babel-loader @babel/core
 
+> yarn add babel-loader @babel/core -D
+
 ```js
  module: {
     rules: [
@@ -265,7 +271,8 @@ module.exports = require(`./build/webpack.config.${env}.js`);
 设置调试模式 devtool: '#eval-source-map',
 
 配置 sass
-yarn add sass-loader node-sass -D
+
+> yarn add sass-loader node-sass -D
 
 ```js
 module.exports = {
@@ -299,7 +306,8 @@ module.exports = {
 ```
 
 配置 less
-yarn add less less-loader -D
+
+> yarn add less less-loader -D
 
 ```js
 {
@@ -313,7 +321,8 @@ yarn add less less-loader -D
 ```
 
 配置 PostCSS
-yarn add postcss-loader -D
+
+> yarn add postcss-loader -D
 
 ```js
 {
@@ -330,7 +339,8 @@ yarn add postcss-loader -D
 ```
 
 配置 TypeScript
-yarn add typescript ts-loader -D
+
+> yarn add typescript ts-loader -D
 
 ```js
 module.exports = {
@@ -353,7 +363,8 @@ module.exports = {
 ```
 
 配置 Pug
-yarn add pug pug-plain-loader -D
+
+> yarn add pug pug-plain-loader -D
 
 ```js
 {
@@ -370,4 +381,75 @@ yarn add pug pug-plain-loader -D
     }
   ]
 }
+```
+
+配置插件
+
+配置分析插件 SpeedMeasurePlugin
+
+```js
+const SpeedMeasurePlugin = require('speed-measure-webpack-plugin');
+const smp = new SpeedMeasurePlugin();
+module.exports = smp.wrap({
+  ...
+});
+```
+
+优化项配置
+
+配置缓存 cache-loader thread-loader
+
+```js
+{
+        test: /\.(jsx?|babel|es6)$/,
+        include: process.cwd(), // 运行的目录
+        exclude: /node_modules/,
+        use: ['cache-loader', 'thread-loader', 'babel-loader'],
+      },
+```
+
+配置 optimization
+
+```js
+/**
+     * 优化项
+     */
+    optimization: {
+      /**
+       * 分割代码块，如果只有一个入口，就不需要分割了，只有多页，才需要把公共的抽离出来
+       * @param cacheGroups 缓存组
+       * @param vendors 第三方库
+       * @param common 公共的模块
+       * @param priority 添加权重
+       * @param minChunks 重复2次使用的时候需要抽离出来
+       *
+       */
+      splitChunks: {
+        cacheGroups: {
+          vendors: {
+            name: 'chunk-vendors',
+            test: /node_modules/,
+            priority: 1,
+            chunks: 'initial', // 刚开始就要抽离
+          },
+          common: {
+            name: 'chunk-common',
+            minChunks: 2,
+            priority: -20,
+            chunks: 'initial',
+            reuseExistingChunk: true,
+          },
+        },
+      },
+      minimizer: [
+        new TerserPlugin({
+          sourceMap: true,
+          cache: true,
+          parallel: true,
+          extractComments: false,
+        }),
+        new OptimizeCssnanoPlugin({}),
+      ],
+    },
+
 ```

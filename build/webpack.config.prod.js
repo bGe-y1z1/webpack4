@@ -20,7 +20,6 @@ module.exports = smp.wrap(
      * @param hints 有性能问题会警告提示
      */
     performance: {
-      // 性能监控提示
       hints: 'warning',
     },
     /**
@@ -47,6 +46,9 @@ module.exports = smp.wrap(
             'stylus-loader',
           ],
         },
+        /**
+         * 解析 css
+         */
         {
           test: /\.css$/,
           use: [MiniCssExtractPlugin.loader, 'css-loader'],
@@ -107,7 +109,9 @@ module.exports = smp.wrap(
        * 去除打包的文件
        */
       new CleanWebpackPlugin(),
-
+      /**
+       * 把chunk id变为一个字符串标识符。
+       */
       new webpack.NamedChunksPlugin((chunk) => {
         if (chunk.name) {
           return chunk.name;
@@ -131,7 +135,7 @@ module.exports = smp.wrap(
         hashDigest: 'hex',
       }),
       /**
-       *
+       * 将CSS提取为独立的文件的插件，对每个包含css的js文件都会创建一个CSS文件，支持按需加载css和sourceMap
        */
       new MiniCssExtractPlugin({
         filename: '[name].[hash].css',

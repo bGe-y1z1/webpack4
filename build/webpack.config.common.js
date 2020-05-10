@@ -199,6 +199,9 @@ const webpackConfig = {
      * 那么它会应用到 .vue 文件里的 <script> 块
      */
     new VueLoaderPlugin(),
+    /**
+     * 打包进度条
+     */
     new ProgressBarPlugin(),
     /**
      * 强制所有必需模块的完整路径与磁盘上实际路径的精确情况匹配。
